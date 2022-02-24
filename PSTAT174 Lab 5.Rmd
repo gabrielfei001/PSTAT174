@@ -1,0 +1,48 @@
+---
+title: "PSTAT174 Lab 5"
+author: "Gabriel Fei"
+date: "10/29/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1
+```{r, echo = TRUE}
+library(tsdl)
+milk <- subset(tsdl, 12, "Agriculture")[[3]]
+plot(milk)
+dmilk <- diff(milk, 12)
+ddmilk <- diff(dmilk, 1)
+acf(ddmilk, lag.max = 50, main = "")
+title("ACF of Yt", line = -1, outer = TRUE)
+pacf(ddmilk, lag.max = 50, main = "")
+title("PACF of Yt", line = -1, outer = TRUE)
+```
+\textbf{a)} The series milk doesn't look stationary because the series has an increasing trend which should not be the case if the series was stationary. \
+
+\textbf{c)} For the seasonal part (P, D, Q), here we focus on seasonal lags $h = 1s, 2s,...etc$: \
+We applied one seasonal differencing, given from our equation of $Y_t$, so $D = 1$ at lag $s = 12$. The ACF shows a strong peak at $h = 1s$ and smaller peaks at $h = 2$. A good choice for the MA part could be $Q = 1$ or $Q = 2$. The PACF shows a strong peak at $h = 1s$ and 2 smaller peaks at $h = 2s, 4s$. A good choice for th AR part could be $P = 1$ or $P = 4$. \
+For the non-seasonal part (p, d, q), here we focus on $h = 1,...,11$: \
+We applied one differencing to remove the trend: $d = 1$. The ACF seems to just abruptly cut off at lag 0. A good choice for the MA part could be $q = 0$. The PACF doesn't seem to go anywhere, it's continually within the threshold, so a good choice for the AR part would be $p = 0$. \
+Some possible candidate models $SARIMA(p, d, q) \times (P, D, Q)_s$ for the series $Y_t$ are:
+$$
+\begin{aligned}
+SARIMA(p = 0, d = 1, q = 0) & \times (P = 1, D = 1, Q = 1) \\
+SARIMA(p = 0, d = 1, q = 0) & \times (P = 4, D = 1, Q = 2)
+\end{aligned}
+$$
+\textbf{d)} I'll choose $SARIMA(p = 0, d = 1, q = 0) \times (P = 4, D = 1, Q = 2)$ model for this data set.
+```{r q1.4, echo = TRUE}
+library(astsa)
+fit  <- sarima(xdata = ddmilk,
+               p = 0, d = 1, q = 0,
+               P = 4, D = 1, Q = 2, S = 12,
+               details = FALSE)
+print('Coefficients')
+fit$fit$coef
+plot(fit$fit$residuals)
+```
+

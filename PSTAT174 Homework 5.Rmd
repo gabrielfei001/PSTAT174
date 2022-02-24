@@ -1,0 +1,305 @@
+---
+title: "PSTAT174 Homework 5"
+author: "Gabriel Fei"
+date: "11/3/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1 (Glossary of R-commands for time series)
+
+\textbf{Defining a working directory:} \
+\quad We use setwd("Path to Directory") to define a working directory
+```{r wd, echo = TRUE}
+setwd("/Users/gabri/Desktop/PSTAT 174")
+```
+
+\textbf{Read and plot data:} \
+\quad We use read.table("my data", sep, header, skip, nrows) to read in delimited data files, specifying the delimiter with sep.
+```{r data, echo = TRUE}
+wine.csv = read.table("monthly-australian-wine-sales-th.csv",
+                      sep = ",", header = FALSE, skip = 1, nrows = 187)
+```
+\quad We use the plot function to create a basic plot of our data. We can also create axis labels with xlab and ylab.
+```{r plot, echo = TRUE}
+x <- c(1, 2, 3, 4)
+y <- x^2
+plot(x, y, xlab = "x label here", ylab = "y label here")
+```
+
+\quad We use the ts.plot() function to plot serveral time series data on a common plot.
+```{r tsdata, echo = TRUE}
+wine = ts(wine.csv[,2], start = c(1980, 1), frequency = 12) # Creating a time series object from wine data.
+ts.plot(wine)
+```
+
+\textbf{Simulate and plot ARMA models:} \
+\quad To simulate an ARMA model we use the arima.sim() funciton, to specify it being an ARMA model, we use the model parameter and list both ar and ma coefficients. We can specify the length of the output with n and specify the standard deviations with sd.
+```{r simarma, echo = TRUE}
+arma = arima.sim(model = list(ar = c(0.6), ma = c(0.95)), n = 100, sd = 1)
+```
+\quad To plot the ARMA model we use plot.ts() function, specifying data and and the phi and theta coefficients of our model. We can also include a main title header using the main parameter.
+```{r plotarma, echo = TRUE}
+plot.ts(arma, main = "ARMA(1,1), phi = 0.6, theta = 0.95")
+```
+\textbf{Add trend and mean line to the original time series plot:} \
+\quad We can use the abline() function paired with the lm() function to create a trend line on the original time series plot.
+```{r tstrend, echo = TRUE}
+ts.plot(wine)
+fit<-lm(wine~time(wine)) 
+abline(fit, col = "blue")
+```
+\quad To add a mean line to the original time series plot we combine the mean() function along with the code above.
+```{r tsmean, echo = TRUE}
+ts.plot(wine)
+fit<-lm(wine~time(wine)) 
+abline(fit, col = "red")
+abline(h = mean(wine), col = "blue")
+```
+\textbf{Calculate and plot theoretical acf/pacf for ARMA models:} \
+\quad To calculate the theoretical acf and pacf of ARMA models we can use the ARMAacf() function, specifying the theoretical pacf with the parameter pacf = TRUE.
+```{r theoacfpacf, echo = TRUE}
+tacf <- ARMAacf(ar = c(0.6), ma = c(0.95), lag.max = 100)
+tpacf <- ARMAacf(ar = c(0.6), ma = c(0.95), lag.max = 100, pacf = TRUE)
+```
+\quad To plot these theoretical acfs and pacfs, we use the plot() function.
+```{r plottheos, echo = TRUE}
+plot(tacf, xlim = c(1, 100), ylab = "r", type = "h", main = "ACF for AMRA(1, 1) ar c = 0.6, ma c = 0.95")
+abline(h = 0)
+plot(tpacf, xlim = c(1, 100), ylab = "r", type = "h", main = "PACF for AMRA(1, 1) ar c = 0.6, ma c = 0.95")
+abline(h = 0)
+```
+\textbf{Calculate and plot sample acf/pacf:} \
+\quad To calculate and plot the sample acf and pacf we can use the acf() and pacf() functions of our our simulated ARMA models.
+```{r sacfpacf, echo = TRUE}
+sacf <- acf(arma, lag.max = 100, main = "")
+title("ACF of ARMA(1, 1), line = -1, outer = TRUE")
+sacf <- pacf(arma, lag.max = 100, main = "")
+title("PACF of ARMA(1, 1), line = -1, outer = TRUE")
+```
+\textbf{Check whether a particular model is causal/invertible:} \
+\quad To check whether a particular model is causal/invertible we need to take the roots of the polynomials and check whether or not their absolute value is greater than 0. If they are then we can say the model is causal/invertible. We check the AR side for causality and the MA side for invertibility.
+```{r armaroots, echo = TRUE}
+z.ar <- polyroot(c(1, -0.65))
+z.ma <- polyroot(c(1, 0.95))
+print(z.ar)
+print(z.ma)
+```
+\quad To plot these roots, we can use the plot.roots function().
+```{r plot.root, echo = FALSE}
+plot.roots <- function(ar.roots=NULL, ma.roots=NULL, size=2, angles=FALSE, special=NULL, sqecial=NULL,my.pch=1,first.col="blue",second.col="red",main=NULL)
+{xylims <- c(-size,size)
+      omegas <- seq(0,2*pi,pi/500)
+      temp <- exp(complex(real=rep(0,length(omegas)),imag=omegas))
+      plot(Re(temp),Im(temp),typ="l",xlab="x",ylab="y",xlim=xylims,ylim=xylims,main=main)
+      abline(v=0,lty="dotted")
+      abline(h=0,lty="dotted")
+      if(!is.null(ar.roots))
+        {
+          points(Re(1/ar.roots),Im(1/ar.roots),col=first.col,pch=my.pch)
+          points(Re(ar.roots),Im(ar.roots),col=second.col,pch=my.pch)
+        }
+      if(!is.null(ma.roots))
+        {
+          points(Re(1/ma.roots),Im(1/ma.roots),pch="*",cex=1.5,col=first.col)
+          points(Re(ma.roots),Im(ma.roots),pch="*",cex=1.5,col=second.col)
+        }
+      if(angles)
+        {
+          if(!is.null(ar.roots))
+            {
+              abline(a=0,b=Im(ar.roots[1])/Re(ar.roots[1]),lty="dotted")
+              abline(a=0,b=Im(ar.roots[2])/Re(ar.roots[2]),lty="dotted")
+            }
+          if(!is.null(ma.roots))
+            {
+              sapply(1:length(ma.roots), function(j) abline(a=0,b=Im(ma.roots[j])/Re(ma.roots[j]),lty="dotted"))
+            }
+        }
+      if(!is.null(special))
+        {
+          lines(Re(special),Im(special),lwd=2)
+        }
+      if(!is.null(sqecial))
+        {
+          lines(Re(sqecial),Im(sqecial),lwd=2)
+        }
+        }
+
+```
+```{r plotroots, echo = TRUE}
+plot.roots(z.ar, z.ma)
+```
+\textbf{Perform Box-Cox transforms:} \
+\quad To perform Box-Cox transforms we can use the boxcox() function.
+```{r boxcox, echo = TRUE}
+library(MASS) # boxcox in MASS library
+t = 1:length(wine)
+fit = lm(wine~t)
+bcTransform = boxcox(wine~t, plotit = FALSE)
+```
+\quad We can go one step further and calculate lambda and perform the transformation on the plot of our original series.
+```{r boxcoxplot, echo = TRUE}
+lambda = bcTransform$x[which(bcTransform$y == max(bcTransform$y))]
+wine.bc = (1/lambda)*(wine^lambda-1)
+ts.plot(wine.bc, main = "Box-Cox transformed data")
+```
+\textbf{Perform differencing data at lags 1 and 12:} \
+\quad To perform differencing at lags 1 and 12, we can use the diff() function and specify the lag in the 2nd parameter.
+```{r diff, echo = TRUE}
+y1 = diff(wine.bc, 1)
+plot(y1, main = "De-trended Time Series/Differenced at lag 1")
+abline(h = 0, lty = 2)
+y12 = diff(y1, 12)
+ts.plot(y12, main = "De-trended/seasonalized Time series/Differenced at Lab 1 and 12")
+abline(h = 0, lty = 2)
+```
+\textbf{Perform Yule-Walker estimation and find standard deviations of the estimates:} \
+\quad To perform Yule-Walker estimation we can use the ar() function on our model and specify the method.
+```{r yw, echo = TRUE}
+yw <- ar(arma, aic = TRUE, order.max = NULL, method = c("yule-walker"))
+yw$ar
+```
+\quad To find the standard deviation of the estimates we can use the variance of the estimates and square root them.
+```{r}
+std = sqrt(diag(yw$asy.var.coef))
+std
+```
+\textbf{Perform MLE and check AICC associated with the model:} \
+\quad To perform MLE we can use the arima() function and specify the method "ML".
+```{r MLE, echo = TRUE}
+x_fit40 = arima(arma, order = c(4, 0, 0), method = "ML")
+```
+\quad To check AICC associated with the model we can us the AICc() function.
+```{r AICc, echo = TRUE}
+library(qpcR) # In qpcR library
+AICc(x_fit40)
+```
+## Question 2
+```{r loaddata, echo = FALSE}
+library(tsdl)
+crimeAU.ts <- tsdl[[512]]
+```
+\textbf{a)} \
+The data set that I have chosen is "Deaths from gun-related homicides and suicides and non-gun-related homicides and suicides in Australia from 1915 to 2004" from the Time Series Data Library package in R. I'll most likely be focusing more on the rate of firearm suicide in those years. \
+\
+\textbf{b)} \
+This data set is important because it allows us/the Australian nation to see how the rates of suicide involving guns have changed over time, and whether or not the implementations of certain bans/laws/agreements. I plan to forecast this data, and in doing so, we can see whether or not the introduced legislation will have a positive impact in decreasing the suicide by firearm rate. \
+\
+\textbf{c)} \
+```{r crimeplot, echo = TRUE}
+ts.plot(crimeAU.ts[,1], main = "Rate of Firearm Suicide Data", ylab = "Rate of Firearm Suicide")
+crime_fs = crimeAU.ts[,1]
+```
+i) There does appear to be a decreasing trend in the rate of firearm suicide data plot, we can see that the rate originally starts at 4, but it ends up being sub 1. \
+\
+ii) There doesn't seem to be any apparent seasonal changes, there's no pattern behind the increase and decrease of rate in the plot either. \
+\
+iii) There are indeed sharp changes in behavior in the plot, there's one at around 1923, one around the early 1940s, and a huge decrease following the 1990s, this could all be due to restrictions and legislation imposed by the Australian government. \
+\
+\textbf{d)}\
+```{r transformations, echo = TRUE}
+c1 = diff(crime_fs, 1)
+plot(c1, main = "De-trended Time Series/Differenced at Lag 1")
+abline(h = 0, lty = 2)
+c1.1 = diff(c1, 1)
+plot(c1.1, main = "De-trended Time Series/Differenced at Lag 1 twice")
+abline(h = 0, lty = 2)
+```
+I transformed the data by differencing twice at lag 1. The first reason for doing so was to remove the trend that can be seen in part c. The second reason was because of a weird plot from the PACF plot that I plotted beforehand. The reason I used lag 1 the first time was to rid of the trend, the reason for the second time was because our data was there wasn't a real apparent seasonality in the original plot, so I just decided to go with 1 again. Afer differencing, the data is indeed stationary. \
+\
+\textbf{e)} \
+\
+```{r crimeacfpacf, echo = TRUE}
+acf(c1.1, lag.max = 80)
+pacf(c1.1, lag.max = 80)
+```
+From the ACF and PACF graphs, the ACF graph suggests a MA(1) model if not that, then possibly  a MA(8) model, because at these lags, the ACF is above the confidence interval. The PACF graph suggests an AR(5) model because at lags greater than 5, the PACF is equal to 0. So given these two possibilities we also have the possibility of an ARIMA(1, 2, 5) or ARIMA(8, 2, 5). \
+
+## Quesiton 3
+
+Using the fitted model for an AR model:
+$$X_t - \hat{X_t} = \phi_1(X_{t-1} - \hat{X_t}) + \phi_2(X_{t-2} - \hat{X_t}) + \phi_3(X_{t-3} - \hat{X_t}) + Z_t$$
+Plugging in our values from the given model we get:
+$$
+\begin{aligned}
+X_t - \hat{X_t} &= \phi_1(X_{t-1} - \hat{X_t}) + \phi_2(X_{t-2} - \hat{X_t}) + \phi_3(X_{t-3} - \hat{X_t}) + Z_t \\
+X_t - 2.637 &= 0.252(2.93 - 2.637) + 0.061(4.62 - 2.637) - 0.202(2.12 - 2.637) + 0\\
+&= 2.936233
+\end{aligned}
+$$
+We get the value of Quarter 1 of 2021 has to be less than 3.00 so the answer is \textbf{A}. \
+
+## Question 4
+
+We're given an AR(1) model and the mean is 0. We're also given that $\rho(2) = 0.215, \rho(3) = -0.100, X_t = -0.431$. We're asked to find $X_{T+1}$. \
+\
+Using the formula for finding a one-step ahead predictor, we know that:
+$$
+X_{T+1} = \phi_1{X_T}
+$$
+So in order to solve for $X_{T+1}$ we need to find $\phi_1$. We know from the properties of an ACF of AR(1) that $\rho_X(1) = \phi_1, \rho_X(2) = \phi_1^2,...,\rho_X(k)_1^k$. So taking our given $\rho$ we can solve for $\phi_1$ by taking the square root of $\rho(2)$.
+$$
+\begin{aligned}
+\rho(2) &= 0.215 \\
+\phi_1 &= -\sqrt{0.215} \\
+&= -0.4636809
+\end{aligned}
+$$
+We get that $\phi_1$ is equal to -0.4636809. It's negative because our $\rho(3) = -0.100$ and given the properties of an ACF of AR(1), we know that $\rho_X(3) = \phi_1^3$, thus since $\rho(3)$ is negative and $\rho(2)$ is positive, $\phi_1$ has to be negative.\
+\
+Then plugging $\phi_1$ into our equation:
+$$
+\begin{aligned}
+X_{T+1} &= \phi_1{X_T} \\
+&= -0.4636809 \ \cdot \ -0.431 \\
+&= 0.1998465
+\end{aligned}
+$$
+\textbf{Thus we get that }$X_{T+1} = 0.1998465$. \
+
+## Question 5
+
+We're given 5 models and their likelihood and asked to determine the best model that's fitted on the same time series. We know that the minimized AIC can help us determine which model fits the time series the best. We can use the AIC equation and find the best model:
+$$
+AIC = -2 \times \text{log-likeihood} + 2 \times (p + q+ 2)
+$$
+For model AR(1):
+$$
+\begin{aligned}
+AIC &= -2 \times -650 + 2 \times (1 + 0 + 2) \\
+&= 1306
+\end{aligned}
+$$
+For model ARMA(1, 1):
+$$
+\begin{aligned}
+AIC &= -2 \times -641 + 2 \times (1 + 1 + 2) \\
+&= 1290
+\end{aligned}
+$$
+For model ARMA(1, 2):
+$$
+\begin{aligned}
+AIC &= -2 \times -636 + 2 \times (1 + 2 + 2) \\
+&= 1282
+\end{aligned}
+$$
+For model ARMA(2, 3):
+$$
+\begin{aligned}
+AIC &= -2 \times -630 + 2 \times (2 + 3 + 2) \\
+&= 1274
+\end{aligned}
+$$
+For model ARMA(4, 3):
+$$
+\begin{aligned}
+AIC &= -2 \times -629 + 2 \times (3 + 4 + 2) \\
+&= 1276
+\end{aligned}
+$$
+Given that the AIC for the ARMA(2, 3) model is the lowest, this AIC has been minimized by ARMA(2, 3) which implies that the \textbf{ARMA(2, 3) is the best model for the time series.}

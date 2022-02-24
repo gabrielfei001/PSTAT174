@@ -1,0 +1,50 @@
+---
+title: "PSTAT174 Lab 6"
+author: "Gabriel Fei"
+date: "11/5/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1
+
+\
+\textbf{a)} \
+\
+\textbf{Step 1: Data Processing (make the data stationary)} \
+\quad To make the data stationary, I would difference the time series at lag 1 using the diff() function where the first parameter is my time series data and my second parameter is the specified lag.\
+\textbf{Step 2: Model Identification} \
+\quad To identify our model, we can plot the acf and pacf of our time series using the acf() and pacf() function, and see what models these plots suggest, looking at acf() for MA(q) and pacf() for AR(p). Note that we could also have a mixed model, but all of that can be interpreted through the acf and pacf plots.\
+\textbf{Step 3: Model Estimation} \
+\quad There are many different tools we can use for model estimation. To estimate the parameters of our model, we can use the ar() function for AR models, we can also use the arima() for ARIMA, ARMA and MA models, as well as using the sarima() function for SARIMA models. We can also find our coefficients through Yule Walker estimation by specifying the method in the model functions to be "yw". We can also do some preliminary estimations using the innovations algorithm.\
+\textbf{Step 4: Model Selection} \
+\quad To select the best model, we can use AICC and the maximum likelihood estimate (MLE) to compare different model fits using the AICc() function and specifying the method to "ML". By seeing which model results in the lowest AICc, we can find which is the best model to select. \
+\textbf{Step 5: Model Diagnostics} \
+\quad To perform model diagnostics, we can take a look at the residuals of our model, seeing if they're white noise, seeing if they're normally distributed and such. We can test for the independence of residuals by using the Box.text() function. We can test for the normality of the residuals, we can use the Shapiro Wilkins normality test by using the shapiro.test() function. We can also check normality using the Q-Q plot. \
+\textbf{Step 6: Data Forecast} \
+\quad We can forecast the future observations of our data by using the predict() function, specifying our fitted model as the first parameter and then specifying the number of observations we want to forecast as the second parameter. \
+\
+\textbf{b)} \
+\quad Looking at the Dow Jones index question, specifically part 3, it does appear that differencing once at lag 1 was sufficient enough to make the data stationary. If we compare the original time series data and the de-trended data plot below we can see that the increasing trend that appears in the original data, disappears in the de-trended data plot and the data is somewhat oscillating around 0 on the y. We can also take a look at the acf/pacf plots before and after the differencing at lag 1, and see that after differencing once, the decaying trend in the acf disappears and we get a clearer picture at what our model could be, and the pacf's negative trend goes away after differencing once at lag 1.
+```{r data, echo = FALSE}
+dowj_data <- scan("dowj.txt")
+dowj <- ts(dowj_data)
+```
+
+```{r}
+ts.plot(dowj,main = "Dow Jones Index")
+op <- par(mfrow=c(1,2))
+dowj.diff <- diff(dowj,1)
+par(op)
+ts.plot(dowj.diff, main = "De-trended data")
+op <- par(mfrow=c(1,2))
+acf(dowj)
+pacf(dowj)
+op <- par(mfrow=c(1,2))
+acf(dowj.diff)
+pacf(dowj.diff)
+```
+

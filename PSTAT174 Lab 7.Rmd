@@ -1,0 +1,68 @@
+---
+title: "PSTAT174 Lab 7"
+author: "Gabriel Fei"
+date: "11/11/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1 Part 1
+
+```{r}
+library(tsdl)
+milk <- subset(tsdl, 12, "Agriculture")[[3]]
+train <- milk[1:150]
+test <- milk[151:156]
+ts.plot(train, ylab = "Monthly milk production")
+dmilk <- diff(train, 12)
+ddmilk <- diff(dmilk, 1)
+library(astsa)
+fit.i <- sarima(xdata=train, p=0, d=1, q=0, P=1, D=1, Q=1, S=12)
+```
+We perform diagnostics on our chosen model fit: \
+First we check the white noise assumption with some plots.
+```{r}
+res = fit.i$fit$residuals
+mean(res)
+var(res)
+layout(matrix(c(1,1,2,3),2,2,byrow=T))
+ts.plot(res,main = "Fitted Residuals")
+t = 1:length(res)
+fit.res = lm(res~t)
+abline(fit.res)
+abline(h = mean(res), col = "red")
+
+# acf
+acf(res,main = "Autocorrelation")
+# pacf
+pacf(res,main = "Partial Autocorrelation")
+```
+Then we can also use Box-Pierce, Box-Ljung, and McLeod-Li tests to test the independence of the residuals:
+```{r}
+# Test for independence of residuals
+Box.test(res, lag = 12, type = c("Box-Pierce"), fitdf = 0)
+Box.test(res, lag = 12, type = c("Ljung-Box"), fitdf = 0)
+Box.test(res^2, lag = 12, type = c("Ljung-Box"), fitdf = 0)
+```
+Then we can use the Shapiro-Wilks test and plot the histogram and q-q plot of the residuals to check for normality of the residuals:
+```{r}
+shapiro.test(res)
+par(mfrow=c(1,2))
+# Histogram
+hist(res,main = "Histogram")
+# q-q plot
+qqnorm(res)
+qqline(res,col ="blue")
+```
+From the plot of the fitted residuals against time we can see that there's no trend, slight change in variance and no seasonality. From our ACF/PACF graphs of the residuals, we see that all of the ACF and PACF of the residuals are within the confidence intervals and can be counted as zeros, thus so far from the plots, our fitted model's residuals could resemble white noise. The values of the mean is somewhat close to zero, however the variance is far from one suggesting against a white noise resemblance. Now looking at our tests for residual independence, since all of the p-values for our Box tests are larger than 0.05, we know that the residuals are independent which coincides with white noise resembling residuals. Finally taking a look at the tests to check the normality assumption, the Shapiro-Wilk normality test yields a p-value that's less that's less than 0.05 which rejects the assumption of normality going against the idea of a white noise residual. The histogram isn't normally distributed but rather skewed right, which again is against the idea of a white noise residual. Finally the Q-Q plot is kind of close to a straight line however the values at the end cause the graph to curve a bit so, this doesn't exactly match the notion of normality thus again, against the idea of a white noise residual. \textbf{All in all the residuals do not appear to be white noise, though close, as seen by the various plots and tests and are not normally distributed as seen by the histogram.}
+
+## Question 1 Part 2
+
+```{r}
+sarima.for(train, n.ahead = 6, p=0, d=1, q=0, P=1, D=1, Q=1, S=12, plot.all = TRUE)
+points(151:156, test, lty = 2, col = "blue")
+```
+The red points are the forecasted 6 observations of the training set, and the blue points are the true observations of milk.

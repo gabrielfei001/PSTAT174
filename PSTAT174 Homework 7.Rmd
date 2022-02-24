@@ -1,0 +1,129 @@
+---
+title: "PSTAT174 Homework 7"
+author: "Gabriel Fei"
+date: "11/16/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1
+
+We're given that the time series {$X_t$} follows a stationary AR(1) model $X_t = \phi_0 + \phi_1X_{t-1} + Z_t, Z_t \sim N(0, \sigma_Z^2)$. We know that the absolute value of the parameter $\phi_1$ must be less than 1 due to the condition for stationarity of an AR(1) model. We know that if the parameter $\phi_1 = 0$, then the model would reduce to a white noise process with mean $\phi_0$ because the past value would be removed from the model: 
+$$
+\begin{aligned}
+X_t &= \phi_0 + 0 \cdot X_{t-1} + Z_t \\
+&= \phi_0 + Z_t
+\end{aligned}
+$$
+If the parameter $\phi_1 = 1$, then the model be a random walk with mean $\phi_0$: \
+Given:
+$$
+\begin{aligned}
+X_t &= \phi_0 + \phi_1X_{t-1} + Z_t \\
+\end{aligned}
+$$
+We'll show a random walk by setting $\phi_1 = 1$: \
+For our first step we have:
+$$
+X_1 = \phi_0 + Z_1
+$$
+Showing the random walk:
+$$
+\begin{aligned}
+X_2 &= \phi_0 + 1 \cdot X_{1} + Z_2 \\
+&= \phi_0 + \phi_0 + Z_1 + Z_2 \\
+&= 2\phi_0 + Z_t + Z_2 \\
+X_3 &= \phi_0 + 1 \cdot X_2 + Z_3 \\
+&= \phi_0 + 2\phi_0 + Z_t + Z_2 + Z_3 \\
+&= 3\phi_0  + Z_t + Z_2 + Z_3 \\
+&\text{etc...}
+\end{aligned}
+$$
+As shown above, if the parameter $\phi_1 = 1$ then the model is a random walk as the model is a function of $Z_t$ and a constant. Because of this we know that the parameter $\phi_0$ can equal any value. Finally we know that only the immediate past value $X_{t-1}$ is used as a predictor for $X_t$ because we can't predict using white noise, and the model is also an AR(1) model so $X_{t-1}$ is the only past value predictor available. \
+\textbf{Thus A is False, since as stated earlier the parameter} $\phi_1$ \textbf{can equal any value.} \
+
+## Question 2
+
+We're given the AR(1) model $X_t - 100 = 0.6(X_{t-1} - 100) + Z_t$ to represent a time series of 100 observations. We're also given that $X_{100} = 110$ and $X_{101} = 95$. We're asked to calculate $P_{101}X_{103} - P_{100}X_{103}$. \
+First we'll take our AR(1) model equation and let $Y_t = 0.6X_{t-1} + Z_t$ with $\phi_1 = 0.6$ for $Y_t = X_{t} - 100$. Then taking the general h equation for the h-step ahead predictor:
+$$
+\begin{aligned}
+P_nX_{n+h} &= \phi_1^hX_n \\
+\text{For h = 2}:\\
+P_{101}Y_{101 + 2} &= \phi_1^2(X_{101} - 100) \\
+&= 0.6^2 \cdot (95 - 100) \\
+&= -1.8 \\
+\text{For h = 3}: \\
+P_{100}Y_{100 + 3} &= \phi_1^3(X_{100} - 100) \\
+&= 0.6^3 \cdot (110 - 100) \\
+&= 2.16\\
+\text{Substituting back in X:} \\
+P_{101}X_{101 + 2} &= 100 + -1.8 \\
+P_{100}X_{100 + 3} &= 100 + 2.16 \\
+\text{Solving for } P_{101}X_{103} - P_{100}X_{103}: \\
+98.2 - 102.16&= -3.96
+\end{aligned}
+$$
+\textbf{So our answer for }$P_{101}X_{103} - P_{100}X_{103}$\textbf{ is -3.96}. \
+
+## Question 3
+
+Using the fitted model for an AR model:
+$$X_t - \hat{X_t} = \phi_1(X_{t-1} - \hat{X_t}) + \phi_2(X_{t-2} - \hat{X_t}) + \phi_3(X_{t-3} - \hat{X_t}) + Z_t$$
+Plugging in our values from the given model we get:
+$$
+\begin{aligned}
+X_t - \hat{X_t} &= \phi_1(X_{t-1} - \hat{X_t}) + \phi_2(X_{t-2} - \hat{X_t}) + \phi_3(X_{t-3} - \hat{X_t}) + Z_t \\
+X_t - 2.637 &= 0.252(2.93 - 2.637) + 0.061(4.62 - 2.637) - 0.202(2.12 - 2.637) + 0\\
+&= 2.936233
+\end{aligned}
+$$
+\textbf{We get the value of Quarter 1 of 2016 is 2.936233.} \
+
+## Question 4
+
+We're given that a Gaussian AR(1) model was fitted to a time series based on a sample of size n. We're also given $\hat{\phi}_1 = 0.8, \hat{\mu} = 2, \hat{\sigma}_Z^2 = 9 \times 10^{-4}, x_n = 2.05$. We're asked to write the 95% prediction interval for the observation three periods ahead (AKA $h = 3$). \
+We can use the general equation of the h-step ahead predictor. First let $Y_t = 0.8X_{t-1} + Z_t$ where $\phi_1 = 0.8$ and $Y_t = X_t - 2$. Then taking that general equation of the h-step ahead predictor:
+$$
+\begin{aligned}
+P_nX_{n+h} &= \phi_1^hX_n \\
+\text{For h = 3}: \\
+P_{n}Y_{n + 3} &= \phi_1^3(X_{n} - 2) \\
+&= 0.8^3 \cdot (2.05 - 2) \\
+&= 0.0256\\
+\text{Substituting back in X:} \\
+P_{n}X_{n + 3} &= 2 + 0.0256 \\
+&= 2.0256
+\end{aligned}
+$$
+So we have our sample observation that is 3 periods ahead of the current step. Now to find the 95% prediction intervals for this observation we can find the bounds using $P_nX_{n+h} \pm \phi_{1 - \frac{\alpha}{2}}\cdot\sigma_n(h)$ where $\phi_{1 - \frac{\alpha}{2}} = 1.96$ for 95% prediction intervals and $\sigma_n^2(h) \approx \sigma_Z^2 \cdot \frac{(1 - \phi_1^{2h})}{(1 - \phi_1^2)}$. \
+First we'll solve for $\sigma_n^2(h)$:
+$$
+\begin{aligned}
+\sigma_n^2(h) &\approx \sigma_Z^2 \cdot \frac{(1 - \phi_1^{2h})}{(1 - \phi_1^2)} \\
+&\approx 9 \times 10^{-4} \cdot \frac{(1 - 0.8^{6})}{(1 - 0.8^2)} \\
+&\approx 9 \times 10^{-4} \cdot \frac{0.737856}{0.36} \\
+&\approx 9 \times 10^{-4} \cdot 2.0496 \\
+&= 0.00184464
+\end{aligned}
+$$
+Then taking the square root of $\sigma_n^2(h)$ so we can use it in the bounds equation:
+$$
+\sqrt{\sigma_n^2(h)} \approx \sqrt{0.00184464} \approx 0.04294927
+$$
+Plugging back into the bounds equation and using 1.96 as our $\phi_{1 - \frac{\alpha}{2}}$ for the 95% prediction interval:
+$$
+\begin{aligned}
+\text{Bounds: } &P_nX_{n+h} \pm \phi_{1 - \frac{\alpha}{2}}\cdot\sigma_n(h)  \\
+\text{Upper: } &2.0256 + 1.96 \cdot 0.04294927 \\
+&2.109781 \\
+\text{Lower: } &2.0256 - 1.96 \cdot 0.04294927 \\
+&1.941419
+\end{aligned}
+$$
+\textbf{So our 95}%\textbf{ prediction intervals for the observation three periods ahead is }[1.941419, 2.109781].
+
+

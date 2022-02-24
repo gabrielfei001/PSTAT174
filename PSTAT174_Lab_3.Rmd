@@ -1,0 +1,104 @@
+---
+title: "PSTAT174 Lab 3"
+author: "Gabriel Fei"
+date: "10/14/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1. Consider the AR(2) process below:
+$$
+X_t = 0.8X_{t-1} - 0.12X_{t-2} + Z_t, \quad \text{with} \ Z_{t} \stackrel{iid}{\sim}N(0, 1)
+$$
+\textbf{a)} Express the process in terms of the back shift operator, B.\
+First we do some algebra to isolate $Z_t$ in our process:
+$$
+\begin{aligned}
+X_t &= 0.8X_{t-1} - 0.12X_{t-2} + Z_t \\
+X_t - 0.8X_{t-1} + 0.12X_{t-2} &= Z_t
+\end{aligned}
+$$
+Using the back shift operator(B) to write $X_{t-k} = B^kX_t$ and rewrite our process as:
+$$
+Z_t = X_t - 0.8X_{t-1} + 0.12X_{t-2} \\
+= (1 - 0.8B +0.12B^2)X_t
+$$
+Now let's introduce notation for polynomial $\phi(z)$ of order 2:
+$$
+\phi(z) = 1 - \phi_1z - \phi_2z^2
+$$
+Now substituting $z = B$:
+$$
+\phi(B) = 1 - \phi_1B - \phi_2B^2
+$$
+Pluggig in our values of $\phi$:
+$$
+\phi(B) = 1 - 0.8B + 0.12B^2
+$$
+Now we can rewrite our process as:
+$$
+Z_t = \phi(B)X_t
+$$
+And thus our process is in terms of the back shift operator B. \
+\hfill\break
+\hfill\break
+\textbf{b)} Determine whether each process is casual and/or invertible.\
+To determine whether AR(2) is casual or not we'll find the roots of our $\phi(z)$ polynomial and check if they're greater than 1. Our polynomial looks like this:
+$$
+\phi(z) = 1 - 0.8\phi_1 + 0.12\phi_2
+$$
+So solving for our roots where $\phi(z) = 0$
+```{r b, echo = TRUE}
+polyroot(c(1, -0.8, 0.12))
+```
+Our roots are 1.67 and 5, both greater than 1, which means our roots lie outside the unit circle therefore we can conclude that our AR(2) process is indeed casual. \
+For invertibility, given that our process is an auto-regression model, by the properties of an AR model, we know that AR(p) is always invertible by it's construction: $Z_t = \phi(B)X_t$, thus AR(2) is also invertible. So our AR(2) process is both casual and invertible. \
+\hfill\break
+\hfill\break
+\hfill\break
+\textbf{c)} We simulate 200 observations from this AR(2) model.
+```{r c, echo = TRUE}
+set.seed(1234)
+ar2 <- arima.sim(model = list(ar =  c(0.8, -0.12), sd = 1), n = 200)
+acf(ar2, main = "Sample ACF", ylim = c(-1, 1))
+pacf(ar2, main = "Sample PACF", ylim = c(-1, 1))
+```
+\textbf{d)} Use the above simulation to manually construct the Yule-Walker estimates $\hat{\phi}_1, \hat{\phi}_2$, and $\hat{\sigma}_Z^2$. Use the pre-installed function ar.yw() for estimation.
+```{r d, echo = TRUE}
+#Estimation with Yule-Walker equations
+acv_ar <- acf(ar2, type = "covariance", main = "Sample ACF", plot = F)
+Rho <- toeplitz(acv_ar$acf[c(1,2)]/acv_ar$acf[1])
+rho <- acv_ar$acf[c(2, 3)]/acv_ar$acf[1]
+phi_hat <- solve(Rho) %*% rho
+phi_hat
+
+#Estimate of noise variance
+sigma_z <- acv_ar$acf[1]*(1-t(rho)%*%solve(Rho)%*%rho)
+sigma_z
+
+# Now compare the estimates with the ones obtained through pre-installed functions
+yw <- ar.yw(ar2, order =2)
+yw$x.mean # mean estimate
+yw$ar # Parameter estimates
+yw$var.pred # Error variance
+```
+Our manually constructed Yule-Walker estimates are:
+$$
+\begin{aligned}
+\hat{\phi}_1 = 0.9210879 \\
+\hat{\phi}_2 = -0.2011451 \\
+\hat{\sigma}_Z^2 = 1.024407 \\
+\end{aligned}
+$$
+Our estimates that are obtained through the pre-installed functions are:
+$$
+\begin{aligned}
+\hat{\phi}_1 = 0.9210879 \\
+\hat{\phi}_2 = -0.2011451 \\
+\hat{\sigma}_Z^2 = 1.040007\\
+\end{aligned}
+$$
+As you can see, our estimates are the same, if not extremely close.

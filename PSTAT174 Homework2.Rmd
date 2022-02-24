@@ -1,0 +1,212 @@
+---
+title: "PSTAT174 Homework 2"
+author: "Gabriel Fei"
+date: "10/13/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1.
+
+\textbf{C.} For a graph to exhibit statistically significant autocorrelations of datasets, the lines on the ACF graph must be above/below the dotted confidence interval lines. Given that at lag 0, the ACF value is always 1, only Data Set 3 has a majority of the ACF values above/below the dotted confidence interval lines after lag 0, thus only Data Set 3 exhibits statistically significant autocorrelations. 
+
+## 2.
+
+\textbf{a)} This is an auto-regression model (AR(2) specifically since the last p is 2.). Given that this is an auto-regression model, by the properties of an AR model, we know that AR(p) is always invertible by its construction: $Z_t = \phi(B)X_t$. To check stationarity:\
+First we do some algebra to isolate $Z_t$ in the AR(2) model:
+$$
+\begin{aligned}
+X_t &= \phi_1X_{t-1} + \phi_2X_{t-2} + Z_t \\
+X_t - \phi_1X_{t-1} - \phi_2X_{t-2} &= Z_t \\
+\end{aligned}
+$$
+Then using the Backshift operator (B) where $B^kX_t = X_{t-k}$ to write:
+$$
+X_t - \phi_1X_{t-1} - \phi_2X_{t-2} = (1 - \phi_1B - \phi_2B^2)X_t = Z_t
+$$
+Introducing notation of polynomial $\phi$ of order 2:
+$$
+\phi(z) = 1 - \phi_1 z - \phi_2^2z^2
+$$
+Then plugging in our values of $\phi$ and solving for the roots of $z^*$ where $\phi(z^*) = 0$
+$$
+\phi(z^*) = 1 - \frac{4}{3}z^* +\frac{1}{3}z^{*2{}}
+$$
+```{r 2a, echo = TRUE}
+polyroot(c(1, -4/3, 1/3))
+```
+We get both of our $|z^*|$ roots are not greater than 1, only one of them is and so this AR(2) model isn't stationary but it is invertible. \
+
+\textbf{b)} This is a moving average model, specifically MA(2) since the last q is is 2. Given that this is a moving average model, by the properties of moving average models, we know that MA(q) is always stationary. To check invertibility:\
+First, using the general model of MA(2), we rewerite the model using the shift operator B, rewriting $Z_{t-k} = B^kZ_t$:
+$$
+\begin{aligned}
+MA(2): X_t &= Z_t + \theta_1Z_{t-1} + \theta_2Z_{t-2} \\
+X_t &= 1 \ \cdot \ Z_t + \theta_1BZ_t + \theta_2B^2Z_t \\
+&= (1 + \theta_1B + \theta_2B^2)Z_t
+\end{aligned}
+$$
+Introducing notation for polynomial $\theta$ of order 2:
+$$
+\theta(z) = 1 + \theta_1z + \theta_2z^2
+$$
+Then pluging in our $\theta$'s and solving for the roots of $\theta(z^*)$ where $\theta(z^*) = 0$:
+$$
+\theta(z^*) = 1 -\frac{5}{2}z^* + z^{*2}
+$$
+```{r 2b, echo = TRUE}
+polyroot(c(1, -5/2, 1))
+```
+We get both of our $|z^*|$ roots are not greater than 1, only one of them is and so this MA(2) model isn't invertible but it is stationary. \
+
+## 3.
+\textbf{a)} \
+\textbf{(i)}
+$$
+MA(3) = X_t = Z_t - 1.5Z_{t-1} + 0.75Z_{t-2} - 0.125Z_{t-3}
+$$
+\textbf{(ii)} The ACF function of MA(3) can be written as:
+$$
+\rho_x(k) = \frac{\sum_{i = 0}^{3 - k}\theta_i\theta_{k+i}}{1 + \theta_1^2 + \theta_2^2 + \theta_3^2}, k = 1, 2, 3
+$$
+Solving for $k = 1, 2, 3, 4$:
+$$
+\begin{aligned}
+\rho_x(1) &= \frac{\sum_{i = 0}^{2}\theta_i\theta_{1+i}}{1 + \theta_1^2 + \theta_2^2 + \theta_3^2} \\
+&= \frac{(1)(-1.5) + (-1.5)(0.75) + (0.75)(-0.125)}{1 + (-1.5)^2 + (0.75)^2 +(-0.125)^2} \\
+&= 3.8\bar{6}\\
+\rho_x(2) &= \frac{\sum_{i = 0}^{1}\theta_i\theta_{2+i}}{1 + \theta_1^2 + \theta_2^2 + \theta_3^2} \\
+&= \frac{(1)(0.75) + (-1.5)(-0.125)}{1 + (-1.5)^2 + (0.75)^2 +(-0.125)^2} \\
+&= -1.\bar{3} \\
+\rho_x(3) &= \frac{\sum_{i = 0}^{0}\theta_i\theta_{3+i}}{1 + \theta_1^2 + \theta_2^2 + \theta_3^2} \\
+&= \frac{(1)(-0.125)}{1 + (-1.5)^2 + (0.75)^2 +(-0.125)^2} \\
+&= 0.1\bar{7} \\
+\rho(4) &= 0, \text{since}\ 4 > 3
+\end{aligned}
+$$
+\textbf{b)} \
+\textbf{(i)} \
+$$
+AR(1) = X_t = -0.4X_{t-1} + Z_t
+$$
+\textbf{(ii)} The ACF of AR(1) can be written as:
+$$
+\rho_x(k) = \phi_1^k
+$$
+Solving for $k = 1, 2, 3, 4$:
+$$
+\begin{aligned}
+\rho_x(1) &= (-0.4)^1 = -0.4\\
+\rho_x(2) &= (-0.4)^2 = 0.16\\
+\rho_x(3) &= (-0.4)^3 = -0.064\\
+\rho_x(4) &= (-0.4)^4 = 0.0256
+\end{aligned}
+$$
+
+## 4.
+We have $X_t = 3 + Y + Z_t$, where $Y$ is a mean zero random variable with variance $\sigma_{Y}^2$, independent of the white noise ${Z_t}$. We are to determing whether the process $X$ is stationary and find its autocovariance and autocorrelation functions.\
+To determine whether $X$ is stationary we need to satisify the following conditions.\
+- Mean of $X_t$ is constant \
+- Variance of $X_t$ constant \
+- ACF is a function of lag\
+- ACVF is a function of lag\
+First the mean of $X_t$:
+$$
+\begin{aligned}
+E[X_t] &= E[3 + Y + Z_t]\\
+&= E[3] + E[Y] + E[Z_t] \ \text{by linearity}\\
+&= 3 + 0 + 0\\
+&= 3
+\end{aligned}
+$$
+Next variance:
+$$
+\begin{aligned}
+Var(X_t) &= Var(3 + Y + Z_t) \\
+&= Var(3) + Var(Y) + Var(Z_t) + 2Cov(3, Y) + 2Cov(3, Z_t) + 2Cov(Y, Z_t) \quad \text{by linearity}\\
+&= 0 + \sigma_Y^2 + \sigma_Z^2 + 0 + 0 + 0 \quad \text{by independence and variance properties} \\
+&= \sigma_Y^2 + \sigma_Z^2
+\end{aligned}
+$$
+Now to find the AVCF:
+$$
+\begin{aligned}
+\gamma_x(t, s) &= Cov(X_t, X_{s}) = Cov(3 + Y + Z_t, 3 + Y + Z_{s})\\
+&= Cov(Y + Z_t, Y + Z_{t+k}) \quad \text{by covariance property} \\
+&= Cov(Y, Y) + Cov(Y, Z_{s}) + Cov(Z_{t}, Y) + Cov(Z_t, Z_{s}) \\
+&= \begin{cases}
+\sigma_Z^2 + \sigma_Y^2 \quad \quad t = s\\
+\sigma_Y^2 \quad \quad \quad \quad  \ t \neq s \ \text{,since the variables are indep and thus uncorrelated }
+\end{cases}
+\end{aligned}
+$$
+We can see that our ACVF function is not dependent on t and rather is a function of lag which is $t-s$ dependent on s.\
+Now finding our ACF function:
+$$
+\begin{aligned}
+\rho_x (t, s) &= \frac{\gamma(t, s)}{\gamma_x(0)} \\
+&= \begin{cases}
+1 \quad \quad \ \quad t = s\\
+\frac{\sigma_Y^2}{\sigma_Z^2 + \sigma_Y^2}\quad  \ t \neq s
+\end{cases}
+\end{aligned}
+$$
+We can see here that our ACF function is also not dependent on t and rather is a function of lag which is $t-s$ dependent on s.\
+By the 4 properties we proved above, we know that $X_t = 3 + Y + Z_t$ is a stationary process.
+
+## 5.
+\textbf{(i)} The model is an MA(2) model. \
+\textbf{(ii)} By the properties of a moving average model, MA(2) is stationary. To find out if it's invertable: \
+First, using the general model of MA(2), we rewerite the model using the shift operator B, rewriting $Z_{t-k} = B^kZ_t$:
+$$
+\begin{aligned}
+MA(2): X_t &= Z_t + \theta_1Z_{t-1} + \theta_2Z_{t-2} \\
+X_t &= 1 \ \cdot \ Z_t + \theta_1BZ_t + \theta_2B^2Z_t \\
+&= (1 + \theta_1B + \theta_2B^2)Z_t
+\end{aligned}
+$$
+Introducing notation for polynomial $\theta$ of order 2:
+$$
+\theta(z) = 1 + \theta_1z + \theta_2z^2
+$$
+Then pluging in our $\theta$'s and solving for the roots of $\theta(z^*)$ where $\theta(z^*) = 0$:
+$$
+\theta(z^*) = 1 + 2z^* - 8z^{*2}
+$$
+```{r 5b, echo = TRUE}
+polyroot(c(1, 2, -8))
+```
+We get both of our $|z^*|$ roots are not greater than 1, and so this MA(2) model isn't invertible but it is stationary. \
+\textbf{(iii)} This is our ACF function for MA(2):
+$$
+\rho_x(k) = \frac{\sum_{i = 0}^{2 - k}\theta_i\theta_{k+i}}{1 + \theta_1^2 + \theta_2^2}
+$$
+Now solving for $k = 2$:
+$$
+\begin{aligned}
+\rho_x(2) &= \frac{\sum_{i = 0}^{0}\theta_i\theta_{2+i}}{1 + \theta_1^2 + \theta_2^2} \\
+&= \frac{(1)(-8)}{1 + (2)^2 + (-8)^2} \\
+&= -0.115942029
+\end{aligned}
+$$
+Simulating 300 values of $X_t$ and plotting the sample acf:
+```{r 5c, echo = TRUE}
+set.seed(174)
+ma2 <- arima.sim(model = list(ma = c(2, -8)), n = 300)
+plot(ma2)
+ma2 = acf(ma2)
+ma2[2]
+```
+The sample estimate of our ACF at lag 2 is -0.119 which is extremely close to to the true value which was -0.115942029.\
+Now with 10,000 simulated values.
+```{r 5c2, echo = TRUE}
+set.seed(174)
+ma2n <- arima.sim(model = list(ma = c(2, -8)), n = 10000)
+plot(ma2n)
+ma2n = acf(ma2n)
+ma2n[2]
+```
+The sample estimate of our ACF with 10,000 values is -0.113 which again is extremely close to the true value which was -0.115942029.

@@ -1,0 +1,115 @@
+---
+title: "PSTAT174 Homework 4"
+author: "Gabriel Fei"
+date: "10/27/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1
+1. \
+\textbf{Model 1}: \
+$$
+\begin{aligned}
+Xt + 0.2X{t-1} &= Zt -2Z{t-1} \\
+(1 + 0.2B)X_t &= (1-2B)Z_t \\
+\end{aligned}
+$$
+Model 1 is an ARMA(1,1) model.
+``` {r q1.1, echo = TRUE}
+polyroot(c(1,0.2))
+polyroot(c(1,-2))
+```
+
+Since one of the absolute values of our roots (-5) is greater than 1, the ARMA model is stationary but since our other root (0.5) is smaller than 1, this ARMA model is not invertible.
+\
+\textbf{Model 2}: \\
+$$
+\begin{aligned}
+(1-B)X_t &= (1-0.2B-0.7B ^2) Z_t \\
+\end{aligned}
+$$
+Model 2 is an ARMA(1,2) model.
+```{r q1.2, echo = TRUE}
+polyroot(c(1,1))
+polyroot(c(1,-0.2,-0.7))
+```
+Since one of the absolute values of our roots (-1) isn't greater than one, the ARMA model isn't stationary, tbut since our other root (1.060879+0i) is greater than 1, this ARMA model is  invertible.
+\
+\textbf{Model 3}: \
+$$
+\begin{aligned}
+(1-B ^ 3) X_t &= (1+0.4B-0.45B^2)Z_t \\
+\end{aligned}
+$$
+Model 3 is a SARIMA(3,1,2) X (0,1,0) model.
+```{r q1.3, echo = TRUE}
+polyroot(c(1,0.4,-0.45))
+polyroot(c(1,1))
+```
+
+Since one of the absolute values of our roots (-1-1.111111-0i, 2.000000+0i) is greater than one, the SARIMA model is invertible, but since our other root (-1) isn't greater than 1, this SARIMA model isn't stationary. \
+
+## Question 2
+a)
+\hfill\break
+i) Since p=1, d=1, q=0, P=1, D=1, Q=2, and s=6:
+$$
+\begin{aligned}
+\phi(B) &= (1-\phi_1B) \\
+(1-B)^1 &= 1-B \\
+theta(B) &= 1 \\
+\Phi(B) &= (1-\Phi_1B^6) \\
+(1-B^s)^D &= (1-B^6)^1 \\
+\theta(B) &= (1+\theta_1B^6+\theta_2B^{12}) \\.
+\end{aligned}
+$$
+Writing the eqution in this form gives us: $$(1-\phi_1B)(1-\Phi_1B^6)(1-B)(1-B^6)X_t=(1+\theta_1B^6+\theta_2B^{12})Z_t$$. 
+
+Rewriting without the backshift operator, it would be: $$(X_t-\phi1X{t-1})(X_t-\Phi1X{t-6})(Xt-X{t-1})(Xt-X{t-6})=(Z_t+\theta1Z{t-6}+\theta2Z{t-12})$$
+\hfill\break
+ii) Since p=0, d=1, q=1, P=0, D=0, Q=3, and s=12:
+$$
+\begin{aligned}
+\phi(B) &= 1 \\
+(1-B)^1 &=1-B \\
+\theta(B) &= (1+\theta_1B) \\
+\Phi(B) &= 1 \\
+(1-B^s)^D &= (1-B^{12})^0 = 1 \\
+\theta(B) &= (1+\theta_1B^{12}+\theta_2B^{24}+\theta_3B^{36}) \\
+\end{aligned}
+$$
+Writing the eqution in this form gives us:
+$$(1-B)X_t=(1+\theta_1B)(1+\theta_1B^{12}+\theta_2B^{24}+\theta_3B^{36})Z_t$$
+
+Rewriting without the backshift operator, it would be: $$(Xt-X{t-1})=(Z_t+\theta1Z{t-1})(Z_t+\theta1Z{t-12}+\theta2Z{t-24}+\theta3Z{t-36})$$
+\hfill\break
+iii) Since p=2, d=1, q=2, P=2, D=0, Q=1, and s=4:
+$$
+\begin{aligned}
+\phi(B) &= (1-\phi_1B-\phi_2B^2) \\
+(1-B)^1 &= 1-B \\
+\theta(B) &= (1+\theta_1B+\theta_2B^2) \\
+\Phi(B) &= (1-\phi_1B^4-\phi_2B^8) \\
+(1-B^s)^D &= (1-B^4)^1 \\
+\theta(B) &= (1+\theta_1B^4+\theta_2B^{8}) \\
+\end{aligned}
+$$
+Writing the eqution in this form gives us: $$(1-\phi_1B-\phi_2B^2)(1-\phi_1B^4-\phi_2B^8)(1-B)(1-B^4)X_t=(1+\theta_1B+\theta_2B^2)(1+\theta_1B^4+\theta_2B^{8})Z_t$$
+Rewriting without the backshift operator, it would be:
+$$(X_t-\phi1X{t-1}-\phi2X{t-2})(X_t-\phi1X{t-4}-\phi2X{t-8})(Xt-X{t-1})(Xt-X{t-4})=(Z_t+\theta1Z{t-1}+\theta2Z{t-2})(Z_t+\theta1Z{t-4}+\theta2Z{t-8})$$
+\hfill\break
+b)
+\hfill\break
+i) Converting this back to a SARIMA model, it would be SAMIRA $(0,0,1)\ \ (0,2,0)_{12}$.
+\
+ii) Converting this back to a SARIMA model, it would be SAMIRA $(0,0,0)\ \ (1,0,0)_6$.
+\
+iii) Converting this back to a SARIMA model, it would be SAMIRA $(1,1,0)\ \ (1,0,0)_4$.
+\
+
+
+## Question 3

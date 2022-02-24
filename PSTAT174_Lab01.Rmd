@@ -1,0 +1,123 @@
+---
+title: "PSTAT 174 Lab Assignment 1"
+author: "Gabriel Fei"
+output: 
+  pdf_document: default
+  word_document: default
+  html_document:
+    pdf_print: paged
+date: "9/30/2021"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1. Let $X$ ~ $U$(1, -1) be uniform on (-1, 1), i.e., $f_{X}(x)$ = 1/2 when -1 < $x$ < 1 and zero otherwise. Let $Y = X^{2}$. Calculate the correlation of $X$ and $Y$? Now, use runif() in R to generate 1000 I.I.D samples of $X's$ from $U$(-1, 1), and $Y's$ calculate the sample correlation of $X$ and $Y$. Are $X$ and $Y$ uncorrelated? Are $X$ and $Y$ independent? Any conclusion on the relationship between uncorrelated and independent?
+
+We can see from the given information, that is $Y = X^{2}$, that $X$ and $Y$ are clearly dependent. So calculating the expectation of X:
+$$
+\begin{aligned}
+E(X) &= \int_{-1}^{1}xf(x)dx \\
+&= \int_{-1}^{1}\frac{x}{2}dx \\
+&= \frac{1}{2}\int_{-1}^{1}xdx \\
+&= \frac{1}{2} \left[ \frac{x^2}{2} \right]_{-1}^{1}\\
+&= \frac{1}{4} [1 - 1]\\
+&= \frac{1}{4}[0]\\
+&= 0
+\end{aligned}
+$$
+Then calculating the covariance of X and Y with E(X):
+
+$$
+\begin{aligned} 
+Cov(X, Y) &= E(XY) - E(X)E(Y)\\
+&= E(X^3) - 0 \ \cdot \ E(Y) \\
+&= \int_{-1}^{1}(x^3)(1/2)dx \\
+&= \frac{1}{2}\int_{-1}^{1}x^3dx\\
+&= \frac{1}{2} \left[ \frac{x^4}{4} \right]\\
+&= \frac{1}{8} [1 -1]\\
+&= 0
+\end{aligned}
+$$
+And because our covariance of $X$ and $Y$ is equal to 0, we know the correlation of $X$ and $Y$ is also equal to 0, thus $X$ and $Y$ are uncorrelated. 
+
+Then running a simulation with our previous givens with n = 1000 we get the sample correlation of $X$ and $Y$ to be
+```{r question1, echo = TRUE}
+set.seed(122)
+x <- runif(1000, -1, 1)
+y <- x^2
+cor(x, y)
+```
+which is approximately 0.
+
+The conclusion between uncorrelated and independent is that if the variables are independent then they are in fact uncorrelated however being uncorrelated doesn't imply that the variables are independent as shown above.
+
+\hfill\break
+
+2. Use runif()in R to generate 10, 100, and 1000 I.I.D samples from $U$(-1, 1) respectively, calculate the sample means, compare these sample means with the true mean? Any conclusion on the relationship between sample mean and true mean?
+
+First calculating the true mean of $X$ ~ $Unif(-1, 1)$:
+$$
+\begin{aligned}
+E(X) &= \int_{-1}^{1}xf(x)dx \\
+&= \int_{-1}^{1}\frac{x}{2}dx \\
+&= \frac{1}{2}\int_{-1}^{1}xdx \\
+&= \frac{1}{2} \left[ \frac{x^2}{2} \right]_{-1}^{1}\\
+&= \frac{1}{4} [1 - 1]\\
+&= \frac{1}{4}[0]\\
+&= 0
+\end{aligned}
+$$
+We get the true mean of $X$ to be equal to 0. Now taking simulations of 10, 100, 1000 samples respectively named $X_{1}, X_{2}, X_{3}$ and calculating their sample means:
+
+```{r question2, echo = TRUE}
+X1 <- runif(10, -1, 1)
+X2 <- runif(100, -1, 1)
+X3 <- runif(1000, -1, 1)
+mean(X1)
+mean(X2)
+mean(X3)
+```
+
+In comparison to the true mean, these sample means seem to be relatively close in value, but more than that as we increase the sample size, the sample means correlating to that increase seem to be getting closer and closer to 0, the true mean.
+
+\hfill\break
+
+3. Generate 1000 I.I.D samples of size 100 from $U$(-1, 1), and calculate the sample means. Now, we have 1000 sample means. Plot the histogram of these sample means. What's the asymptotic distribution of these sample means?
+
+```{r question 3, echo = TRUE}
+means = c()
+for (i in 1:1000) {
+  m <- runif(100, -1, 1)
+  means <- append(means, mean(m))
+}
+hist(means, main = "Sample Means of 1000 Uniform Distribution of n = 100 simulations")
+```
+
+From the histogram we can see that the asymptotic distribution of the sample means seems to be a normal distribution.
+
+\hfill\break
+
+4. The file uspop.txt contains US population from 1970 to 1990. Plot US population (in Millions) vs Year. Now, take the square root of US population (in Millions), and plot it vs. Year. Any difference between these two graphs?
+
+```{r question 4, echo = TRUE}
+mydata <- read.delim("C:\\Users\\gabri\\Desktop\\PSTAT 174\\Lab1\\uspop.txt", header = FALSE)
+s <- seq(1970, 1990, 1)
+uspop <- data.frame(mydata, s)
+plot(uspop$s, uspop$V1, main = "US population (in Millions) vs Year", xlab = "Year", ylab = "US population (in Millions)")
+uspop1 <- data.frame(sqrt(mydata), s)
+plot(uspop1$s, uspop1$V1, main = "Square root of US population (in Millions) vs Year", xlab = "Year", ylab = "Square root of US population (in Millions)")
+```
+
+The first graph appears to be a curved exponential graph whereas the second graph is a more linear graph.
+
+\hfill\break
+\hfill\break
+\hfill\break
+\hfill\break
+\hfill\break
+\hfill\break
+\hfill\break
+\hfill\break
+

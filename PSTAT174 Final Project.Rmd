@@ -1,0 +1,253 @@
+---
+title: "PSTAT174 Final Project: Unemployment Rates"
+author: "Gabriel Fei"
+date: "11/30/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align = 'center')
+```
+
+```{r, include = FALSE}
+library(dplyr)
+library(tidyverse)
+library(MASS)
+library(qpcR)
+library(astsa)
+library(ggplot2)
+library(ggfortify)
+library(forecast)
+```
+
+### Abstract
+
+In this Time Series analysis we seek to analyze and forecast a time series dataset, Unemployment Rates. Using techniques such as transformations and differencing to create stationary data, and then analyzing the data through the use of ACF/PACF. Then after analyzing, suggesting possible models of fit for our data and then selecting the best said model through it's AICC value and diagnostic checking. If the selected model is indeed fit for forecasting, we will do so and predict future values for our time series dataset.
+
+### Introduction
+
+The dataset we used in this Time Series analysis is titled Unemployment Rates (obtained through Kaggle) and it contains the unemployment rates in the United States from 1948 to 2021. We opted out of included the 2020-2021 year because of the COVID-19 pandemic, and due to it's volatility, would make our analysis and forecasting quite difficult. The problem and issue we sought to tackle was the unemployment rate in the United States, using the history of unemployment rates, could we predict and forecast the future unemployment rates. If we're successful, perhaps the forecasted values could be used to push for measures against unemployment. In the analysis, we made use of transformation and differncing techniques to create data suitable for analysis and forecasting which was successful. Then introducing possible models we attempted to select the best fit based on AICC values and diagnostics, however we were unsuccessful and because of that the model was unable to be properly forecasted. Despite that, we forecasted the data anyways and saw that the forecasted values were heavily overestimated in comparison to the true value. From this analysis, we conclude that more information and work would be needed to continue to attempt to try to forecast this data. Another possiblity is that these rates are too volatile to forecast and predict.
+
+### Reading in Data
+
+```{r read-data}
+# Took out years 2020 and 2021 because of volatility of COVID-19
+ur.csv <- read.table("US_UR.csv", 
+                    sep = ",", header = FALSE, skip = 1, nrows = 864)
+head(ur.csv)
+# Getting rid of the first 3 characters in the first column using regex and gsub
+ur.csv$V1 <- gsub("^.{0,3}", "", ur.csv$V1)
+head(ur.csv)
+```
+### Creating a time series object as well as splitting the object to train/test sets
+
+```{r ts}
+# Creating Time Series Object
+ur.ts <- ts(ur.csv[,2], 
+            start = c(1948, 1), 
+            end = 2020, 
+            frequency = 12)
+# Splitting the time series object into a training set that excludes the observations
+# for 2019
+unemployment_rate.train <- ts(data = ur.ts[c(1:852)], 
+                        start = c(1948, 1), 
+                        end = 2019, 
+                        frequency = 12)
+# Split the time series object into a test set that holds the true observation values
+# for 2019 to use to compare to forecasted values later
+unemployment_rate.test <- ts(data = ur.ts[c(853:865)], 
+                        start = c(2019, 1), 
+                        frequency = 12)
+
+```
+
+### Plotting and analyzing our time series object
+
+```{r tsplot, echo = FALSE}
+par(mfrow = c(1, 2))
+plot(unemployment_rate.train)
+fit <- lm(unemployment_rate.train~as.numeric(1:length(unemployment_rate.train)));abline(fit, col = "red")
+abline(h=mean(unemployment_rate.train), col = "blue")
+hist(unemployment_rate.train, col = "light blue", xlab = "", main = "histogram; unemployment rate data")
+acf(unemployment_rate.train, lag.max = 100, main="ACF of the Unemployment Rate Data") 
+```
+Right off the bat our immediate observations tell us that there's no apparent trend as seen by the red line, though there is some notion of seasonality as peaks seem to reappear and we have a large, slowly decaying ACF and the histogram is slightly skewed. We also seem to have a non-constant of variance and mean for our time-series. Looking at the peaks we can see we can see that there are some sharp changes in behavior in these peaks, specifically leading into 1950, 1970s, 1980s, and 2008. These changes were results of various economic crisis's such as consequences of war (e.g. coming out of World War II in 1940s into the Korean War in the 1950s, recession in 1970s, 1980s and 2008, as well as a market crash in 2008), recessions and market crashes.
+
+### Identifying a model for our Time Series
+
+Before we do any transformation, let's find the variance so we can compare it to the variance of the model after transformations to see which transform is a good fit for the model.
+```{r var, echo = FALSE, eval = TRUE}
+cat("Variance of Time Series before transformations: ", var(unemployment_rate.train))
+```
+Now let's begin transforming our data, first starting with a log transform.
+```{r log-transformation, eval = TRUE}
+ur_train.log  <- log(unemployment_rate.train)
+plot.ts(ur_train.log)
+cat("Variance of Time Series after Log transformation: ", var(ur_train.log))
+```
+Here we can see that the log transform did in fact lower our variance quite a bit which points to the notion that this transformation could be a good fit for the data. But let's check the other transformation, the Box Cox transformation since there's a slight skew in our histogram and we have a non-constant variance.
+
+```{r bc-transform, echo = FALSE}
+len <- 1:length(unemployment_rate.train)
+bcTransform = boxcox(unemployment_rate.train~len)
+lambda=bcTransform$x[which(bcTransform$y == max(bcTransform$y))]
+ur_train.bc = (1/lambda)*(unemployment_rate.train^lambda-1)
+ts.plot(ur_train.bc)
+cat("Variance of Time Series after BoxCox transformation: ", var(ur_train.bc))
+
+```
+Here we can see that the variance was also lowered dramatically using the Box-Cox transformation as well. Overall, looking at the plots of the training data and the transformed data, there's not much difference, however we know that by looking at the variance of the data and the transforms that the variance became much more stable after the transformations.
+```{r hist, echo = FALSE}
+par(mfrow = c(1, 2))
+hist(ur_train.log, col="light blue", xlab="", main="histogram; log-transform")
+hist(ur_train.bc, col="light blue", xlab="", main="histogram; boxcox-transform")
+```
+Looking at the histograms of the transforms, though similar, the log transform seems to yield a slightly more symmetrical histogram which gives reason to choosing the log-transform as the transformation for our data. Also, since the log transform yielded the lowest variance, we will choose this transform to be a good fit for our data.
+
+
+```{r decomp, echo = FALSE}
+y <- ts(as.ts(ur_train.log), frequency = 12)
+decomp <- decompose(y)
+plot(decomp)
+```
+The decomposition of the log-transformed data shows seasonality so we need to difference our data to rid of the seasonality. While differencing, we will keep track of the variance to ensure we don't overdifference.
+
+```{r diff, echo = FALSE}
+par(mfrow = c(1, 2))
+diff_ur <- diff(ur_train.log, 12)
+plot.ts(diff_ur, main = "Log-transformed data differenced at 12")
+fit <- lm(diff_ur~as.numeric(1:length(diff_ur))); abline(fit, col = "red")
+abline(h = mean(diff_ur), col = "blue")
+diff_ur2 <- diff(diff_ur, 1)
+plot.ts(diff_ur2, main = "Differenced data differenced again at 1")
+fit <- lm(diff_ur2~as.numeric(1:length(diff_ur2))); abline(fit, col = "red")
+abline(h = mean(diff_ur2), col = "blue")
+diff_ur3 <- diff(diff_ur2, 12)
+cat("Variance of 1st difference at lag 12: ", var(diff_ur), "\n")
+cat("Variance of 2nd difference at lag 1: ", var(diff_ur2), "\n")
+cat("Variance of 3rd difference at lag 12: ", var(diff_ur3))
+```
+Differencing at lag 12 was used so that we could remove the seasonality of the data since the frequency of the data was in months, however there still remained some seasonality as can be seen from the graph, so we differenced at 1 to try to remove the slightest possibility of a trend and after differencing twice the data appeared to be stationary. Looking at the variance of each difference, we can see that after differencing once, the variance was lowered, and then lowered even more after differencing twice. A third difference was considered but disregarded as the variance showed an increase pointing to a property of overdifferencing. Now let's take a look at the acf and pacf of the second-differenced data to identify som possible models for our data.
+ 
+```{r acfs, echo = FALSE}
+par(mfrow = c(1, 2))
+acf(diff_ur2, lag.max=100, main = "ACF of the differenced data differenced at 1")
+pacf(diff_ur2, lag.max = 100, main = "PACF of the differenced data differenced at 1")
+
+```
+From the ACF graph, we have an obvious non-zero value at lag 1. There could be an argument made for a non-zero value to also be found at around lag 5, so we can take that into consideration. The PACF however seems to have exponentially growing spikes at lags 1, 2, 3, 4... etc, meaning there's a seasonal element of 1 here. So from our ACF, we have an order p of 1 for sure because of that obvious non-zero value at lag 1, and we could possibly have an order q of 5. From the PACF, there's no real order that's blatently obvious, so it seems that we have an order p of 0. Some possible models are $SMA(1)_1$ and $SMA(5)_1$ or $MA(1)$ and $MA(5)$.
+
+### Model Fitting
+
+Trying the SMA and MA models listed above:
+```{r sma, include = FALSE}
+model1 <- arima(ur_train.log, order=c(0,1,1), seasonal = list(order = c(0,1,0), period = 1), method="ML")
+model1
+model2 <- arima(ur_train.log, order=c(0,1,5), seasonal = list(order = c(0,1,0), period = 1), method="ML")
+model2
+model3 <- arima(ur_train.log, order=c(0,1,1), seasonal = list(order = c(0,1,1), period = 1), method="ML")
+model3
+model4 <- arima(ur_train.log, order=c(0,1,5), seasonal = list(order = c(0,1,1), period = 1), method="ML")
+model4
+```
+```{r}
+cat("AICC of MA(1): ", AICc(model1), "\n")
+cat("AICC of MA(5): ", AICc(model2), "\n")
+cat("AICC of SMA(1): ", AICc(model3), "\n")
+cat("AICC of SMA(5): ", AICc(model4))
+```
+Looking at the AICC values, it seems that the SMA(5) model and MA(5) contain the lowest AICC values. SMA(5) is the "best" model since it has the lowest AICC out of all the possible models we considered which was one of the models we suggested earlier by our ACF/PACF, but we can do further diagnostic checking tests to see which one is actually better.
+
+Let's call MA(5) model 1 and SMA(5) model 2.
+$$
+\begin{aligned}
+\text{Model A: }\nabla_{12}\nabla{1} \ ln(UR) &= (1 - 0.9657_{(0.0368)}B + 0.1390B^2_{(0.0501)} - 0.0535B^3_{(0.0551)} - 0.0117B^4_{(0.0461)} - 0.1081B^5_{(0.0321)})\\
+\hat{\sigma}_Z^2 &= 0.001361 \\
+\text{Model B: }\nabla_{12}\nabla{1} \ ln(UR) &= (1 - 1.5928_{(0.0557)}B + 1.1456B^2_{(0.1103)} - 0.7869B^3_{(0.1156)} + 0.4848B^4_{(0.0954)} - 0.2508B^5_{(0.0415)})\\
+&(1 - 0.6262B_{(0.0487)})\\
+\hat{\sigma}_Z^2 &= 0.001329 \\
+\end{aligned}
+$$
+Both of these models are stationary because they are pure MA models.
+```{r, echo = FALSE}
+par(mfrow = c(1, 2))
+source("plot.roots.R")
+plot.roots(NULL,polyroot(c(1, -0.9657, 0.1390, 0.0535, -0.0117, -0.1081)), main="(A) roots of ma part, nonseasonal ")
+plot.roots(NULL,polyroot(c(1, -1.5928, 1.1456, 0.7869, 0.4848, -0.2508)), main="(B) roots of ma part, nonseasonal ")
+```
+Model A is invertible because all of it's roots lie outside the unit circle, whereas the non-seasonal part of Model B isn't invertible because there are some roots that are within the unit circle.
+
+Testing with diagnostic checking:
+```{r d-checkA, echo = FALSE}
+par(mfrow = c(1, 2))
+res_A <- residuals(model2)
+hist(res_A,density=20,breaks=20, col="blue", xlab="", prob=TRUE)
+m_A <- mean(res_A)
+std_A <- sqrt(var(res_A))
+curve( dnorm(x,m_A,std_A), add=TRUE )
+plot.ts(res_A)
+fit_A <- lm(res_A ~ as.numeric(1:length(res_A))); abline(fit_A, col="red")
+abline(h=mean(res_A), col="blue")
+qqnorm(res_A,main= "Normal Q-Q Plot for Model A")
+qqline(res_A,col="blue")
+acf(res_A, lag.max=40)
+pacf(res_A, lag.max=40)
+shapiro.test(res_A)
+Box.test(res_A, lag = 12, type = c("Box-Pierce"), fitdf = 5)
+Box.test(res_A, lag = 12, type = c("Ljung-Box"), fitdf = 5)
+Box.test((res_A)^2, lag = 12, type = c("Ljung-Box"), fitdf = 5)
+```
+There's no visible trend or seasonality in the plot of the residuals, no change of variance either. The sample mean is basically 0, -0.001993915. The histogram seems to be fine, however the Q-Q plot has curved ends failing the normality assumption. The ACF/PACF of the residuals also doesn't contain all the values within the confidence intervals. Also because for all of the box tests/shapiro tests, the p-value is not greater than 0.05, we fail the diagnostic checks for Model A.
+
+```{r d-checkB, echo = FALSE}
+par(mfrow = c(1, 2))
+res_B <- residuals(model4)
+hist(res_B,density=20,breaks=20, col="blue", xlab="", prob=TRUE)
+m_B <- mean(res_B)
+std_B <- sqrt(var(res_B))
+curve( dnorm(x,m_B,std_B), add=TRUE )
+plot.ts(res_B)
+fit_B <- lm(res_B ~ as.numeric(1:length(res_B))); abline(fit_B, col="red")
+abline(h=mean(res_B), col="blue")
+qqnorm(res_B,main= "Normal Q-Q Plot for Model B")
+qqline(res_B,col="blue")
+acf(res_B, lag.max=40)
+pacf(res_B, lag.max=40)
+shapiro.test(res_B)
+Box.test(res_B, lag = 12, type = c("Box-Pierce"), fitdf = 6)
+Box.test(res_B, lag = 12, type = c("Ljung-Box"), fitdf = 6)
+Box.test((res_B)^2, lag = 12, type = c("Ljung-Box"), fitdf = 6)
+```
+There's no visible trend or seasonality in the plot of the residuals, no change of variance either. The sample mean is basically 0, -0.001838698. The histogram seems to be fine, however the Q-Q plot has curved ends failing the normality assumption. The ACF/PACF of the residuals also doesn't contain all the values within the confidence intervals. Also because for all of the box tests/shapiro tests, the p-value is not greater than 0.05, we fail the diagnostic checks for Model B.
+
+After analyzing the residuals of both these models, neither one is actually ready or seemingly fit for forecasting even after trying more differencing and other transforms. However just to entertain the thought, let's attempt a forecast anyways.
+
+### Forecasting
+
+We'll attempt to forecast with Model B because it has the lower AICC value of the two that we diagnostic checked.
+
+```{r forecast, echo = FALSE}
+pred.tr <- sarima.for(ur.ts[1:853], n.ahead=12, plot.all=F,
+p=0, d=1, q=1, P=0, D=1, Q=1, S=12)
+lines(854:865, as.vector(pred.tr$pred), col="red")
+lines(854:865, ur.ts[854:865], col="blue")
+points(854:865, ur.ts[854:865], col="blue")
+legend("topleft", pch = 1, col = c("red", "blue"),
+legend = c("Forecasted values", "True Values"))
+```
+### Conclusion
+
+In conclusion, our goals for this analysis were to attempt to forecast and predict the future values of unemployment rates in the US. We were unsuccessful in doing so, the model we selected was SMA(5) to try to forecast, however as can be seen by the attempted forecast, it was overestimated. Although we were unsuccessful in this analysis, perhaps other transformations and methods could be used to create a more suitable model for forecasting and passing diagnostics, but as of this analysis, more methods are needed to actually improve the model and predict accurately.
+
+### Refrences
+
+https://www.kaggle.com/varpit94/us-unemployment-rate-data
+https://stackoverflow.com/questions/54836518/how-to-remove-the-first-three-characters-from-every-row-in-a-column-in-r
+https://www.thebalance.com/unemployment-rate-by-year-3305506
+
+### Appendix
+
+```{r ref.label=knitr::all_labels(), eval = FALSE}
+
+```
+

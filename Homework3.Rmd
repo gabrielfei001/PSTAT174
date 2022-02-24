@@ -1,0 +1,237 @@
+---
+title: "PSTAT 174 Homework 3"
+author: "Gabriel Fei"
+date: "10/20/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Note: ${Z_t} \sim WN(0, \sigma_Z^2)$ denotes white noise.
+
+## 1.
+We have the following ARMA(p, q) model: $X_t = \frac{5}{2}X_{t-1} - 2X_{t-2} + \frac{1}{2}X_{t-3} + Z_t - \frac{1}{2}Z_{t-1}$. \
+We can rewrite the model as:
+$$
+X_t - \frac{5}{2}X_{t-1} + 2X_{t-2} - \frac{1}{2}X_{t-3} = Z_t - \frac{1}{2}Z_{t-1}
+$$
+As seen by our new rewritten equation, we have an ARMA(3, 1) because on the left hand side we have an AR(3) model and on the right hand side, we have a MA(1) model, thus we have an ARMA(3, 1) model. \textbf{Thus B is true.} To test if the model is non-stationary or not we take the roots of the left side using its corresponding polynomial representation:
+$$
+\phi(z) = 1 - \frac{5}{2}z + 2z^2 - \frac{1}{2}z^3
+$$
+Solving for the roots (z*):
+```{r 1-stationary, echo = TRUE}
+polyroot(c(1, -5/2, 2, -1/2))
+```
+Because all of the absolute value our roots are greater than 1, the model is not non-stationary so \textbf{A is false}. To prove invertibility we do the same thing we did in proving stationarity, except this time with the right side. So using the corresponding polynomial representation:
+$$
+\theta(z) = 1 - \frac{1}{2}z
+$$
+Solving for the root (z*):
+```{r 1-invertibility, echo = TRUE}
+polyroot(c(1, -1/2))
+```
+Because all of the absolute value of our roots are greater than 1, the model is indeed invertible so \textbf{C is true}. Now let's write our rearranged model in terms of the backshift operator B and reduce common terms.
+$$
+\begin{aligned}
+(1 - \frac{5}{2}B + 2B^2 - \frac{1}{2}B^3)X_t &= (1 - \frac{1}{2}B)Z_t \\
+(-1 + B)^2(1 - \frac{1}{2}B)X_t &= (1 - \frac{1}{2}B)Z_t \\
+(1 - 2B + B^2)X_t &= Z_t
+\end{aligned}
+$$
+This new equation can be rewritten to:
+$$
+X_t - 2X_{t-1} + X_{t-2} = Z_t
+$$
+
+We can see by this new equation \textbf{D is true}, our original ARMA(3, 1) model is now restated as an ARMA(2, 0) model. And because only A is false, \textbf {E is also false!} \
+
+## 2.
+I. 
+$$X_t = \frac{1}{2}X_{t-1} + Z_t - \frac{1}{2}Z_{t-1}$$
+Rewriting our equation so like terms are on each side:
+$$
+X_t - \frac{1}{2}X_{t-1} = Z_t - \frac{1}{2}Z_{t-1}
+$$
+Then rewriting our equation using the backshift operator B
+$$
+(1 - \frac{1}{2}B)X_t = (1 - \frac{1}{2}B)Z_t
+$$
+We can see that the equations share a common factor $(1 - \frac{1}{2}B)$ and the model can be reduced to get $X_t = Z_t$. \textbf{Thus this model is parameter redundant}. \
+II. 
+$$
+X_t = \frac{1}{2}X_{t-1} + Z_t - \frac{1}{9}Z_{t-2}
+$$
+Rewriting our equation so like terms are on each side:
+$$
+X_t - \frac{1}{2}X_{t-1} = Z_t - \frac{1}{9}Z_{t-2}
+$$
+Then rewriting our equation using the backshift operator B
+$$
+(1 -\frac{1}{2}B)X_t = (1 - \frac{1}{9}B^2)Z_t 
+$$
+We can see that these equations share no common factors. \textbf{Thus, this model is not paramter redundant}.\
+III.
+$$
+X_t = -\frac{5}{6}X_{t-1} - \frac{1}{6}X_{t-2} + Z_t + \frac{8}{12}Z_{t-1} + \frac{1}{12}Z_{t-2}
+$$
+Rewriting our equation so that like terms are on each side:
+$$
+X_t + \frac{5}{6}X_{t-1} + \frac{1}{6}X_{t-2} = Z_t + \frac{8}{12}Z_{t-1} + \frac{1}{12}Z_{t-2}
+$$
+Then rewriting our equation using the backshift operator B
+$$
+\begin{aligned}
+(1 + \frac{5}{6}B + \frac{1}{6}B^2)X_t &= (1 + \frac{8}{12}B + \frac{1}{12}B^2)Z_t \\
+(1 + \frac{1}{3}B)(1 + \frac{1}{2}B)X_t &= (1 + \frac{1}{6}B)(1 + \frac{1}{2}B)Z_t
+\end{aligned}
+$$
+We can see that the model shares one common factor that is $(1 + \frac{1}{2}B)$, and thus this model can be reduced to $(1 + \frac{1}{3}B)X_t = (1 + \frac{1}{6}B)Z_t$. \textbf{Thus this model is parameter redundant.}\
+
+## 3. \
+Given an AR(3) process, which statements are true? \
+I. Partial Autocorrelation for lag 3 is always equal to zero. \
+\textbf{This is false}, for partial autocorrelation, the only time the PACF will always equal to zero is when n (the lag we're looking at) is greater than our p (order of the process). We're looking at lag 3 which is equal to our order 3 so the PACF might not necessarily be zero, but it's most definitely not always zero. \
+II. Partial Autocorrelation for lag 4 is always equal to zero. \
+\textbf{This is true}, as stated above, for partial autocorrelation our PACF will always equal to zero when n (the lag we're looking at) is greater than our p (the order of the process). So in this example our n would be 4 and p would be 3, thus the PACF will be 0. \
+III. Partial Autocorrelation for lag 4 is always greater than zero. \
+\textbf{This is false}, as proven above, the partial autocorrelation for lag 4 is always equal to zero. This is because for partial autocorrelation our PACF will always equal to zero when n (the lag we're looking at) is greater than our p (the order of the process). So in this example our n would be 4 and p would be 3, thus the PACF will be 0. \
+
+## 4. \
+Given PACF for a station process: $\phi_{11} = -0.60, \phi_{22} = 0.36, \phi_{kk} = 0$ for $k \geq 3$. \
+An AR(2) model could have this PACF. To solve for the model's coefficients, we use the relationship between PACF and ACF. \
+For $n = 1$ we have 1 equation.
+$$
+\alpha(1) = \phi_{11} = \rho_x(1) = -0.6 
+$$
+Then for $n = 2$.
+$$
+\begin{aligned}
+\alpha(2) = \phi_{22} &= \frac{\rho_x(2) - (\rho_x(1))^2}{1 - (\rho_x(1))^2} \\
+0.36 &=  \frac{\rho_x(2) - (-0.6)^2}{1 - (-0.6)^2} \\
+0.36 &=  \frac{\rho_x(2) - 0.36}{0.64} \\
+0.2304 &= \rho_x(2) - 0.36 \\
+0.5904 &= \rho_x(2)
+\end{aligned}
+$$
+Then for $n = 2$, we also have to solve for $\phi_{21}$ so we have two equations:
+$$
+\begin{aligned}
+\phi_{21} + \phi_{22}\rho_x(1) &= \rho_x(1); \\
+\phi_{21}\rho_x(1) + \phi_{22} &= \rho_x(2); 
+\end{aligned}
+$$
+Solving this system to find $\phi_{21}$ we get:
+$$
+\begin{aligned}
+\phi_{21} + 0.36(-0.6) &= -0.6; \\
+\phi_{21}(-0.6) + 0.36 &= 0.5904; \\
+\\
+\phi_{21} -0.216 &= -0.6; \\
+\phi_{21}(-0.6) &= 0.2304; \\
+\\
+\phi_{21} &= -0.384; \\
+\phi_{21} &= -0.384; \\
+\end{aligned}
+$$
+The model's coefficients are $\phi_{21} = -0.384, \phi_{22} = 0.36$ The general equation for an order 2 model is:
+$$
+X_t = \phi_{21}X_{t-1} + \phi_{22}X_{t-2} + Z_t
+$$
+So our model equation is:
+$$
+X_t = -0.384X_{t-1} + 0.36X_{t-2} + Z{t}
+$$
+\
+
+## 5. \
+We're given the following time-series model: $X_t = 0.8X_{t-1} + 2 + Z_t - 0.5Z_{t-1}$. \
+First let's move like terms to each side:
+$$
+X_t - 0.8X_{t-1} + 2 = Z_t - 0.5Z_{t-1}
+$$
+We can see from this newly rearranged equation, we can see that our model is an ARMA(1, 1) model, so C is true. To solve for $\rho_x(1)$ in an ARMA(1, 1) model we take the equation:
+$$
+\begin{aligned}
+\rho_x(k) &= \frac{(\phi_1 + \theta_1)(1 + \phi_1\theta_1)}{(1 + 2\phi_1\theta_1 + \theta_1^2)}(\phi_1^{k-1})\\
+\rho_x(1)&= \frac{(-0.8 + -0.5)(1 + (-0.8 \ \cdot -0.5))}{(1 + (2 \ \cdot -0.8 \ \cdot -0.5) + (-0.5)^2)}(\phi_1^{0}) \\
+&= \frac{(-1.3)(1.4)}{(2.05)}(1) \\
+&= -0.887804878
+\end{aligned}
+$$
+Thus \textbf{A is false}. By the equation above, we can see that with each k, the last term $\phi_1^{k-1}$ increases in exponent. However for this particular model, because our $\phi_1$ is negative, it's not always the case that $\rho_X(k) < \rho_X(1), k \geq 2$ since for $k = 2$ our $\rho_X(1)$ gets multiplied by $-0.8$ making it positive which already is greater than $\rho_X(1)$. However the signs do swap every time we go up, for the $k = 3$ case, we multiply by a positive number (0.64), but the answer (around -0.57) is still greater than our $\rho_X(1)$, thus \textbf{B is false}. To prove stationarity in an ARMA(1, 1) model, we take a look at the properties of an ARMA(1, 1) model. This model is stationary if $|\phi_1| < 1$ which is true in our case because $|-0.8| < 1$, thus our model is stationary and D is true. Finally taking the expectation of our original equation:
+$$
+\begin{aligned}
+E[X_t] &= E[0.8X_{t-1} + 2 + Z_t - 0.5Z_{t-1}] \\
+&= 0.8E[X_{t-1}] + E[2] + E[Z_t] -0.5E[Z_{t-1}] \\
+&= 0.8E[X_{t-1}] + E[2]
+\end{aligned}
+$$
+Because of stationarity:
+$$
+\begin{aligned}
+E[X_t] &=  E[X_{t-1}] \\
+E[X_t] &= 0.8E[X_t] + E[2] \\
+E[X_t] - 0.8E[X_t] &= E[2] \\
+(1 - 0.8)E[X_t] &= 2\\
+E[X_t] &= \frac{2}{(0.2)} \\
+&= 10
+\end{aligned}
+$$
+We get that our mean, $\mu_X$, is actually 10, not 2 so \textbf{E is false}. \
+
+## 6. \
+We're given the AR(2) process {$X_t$} satisfying $X_t - \phi X_{t-1} - \phi^2X_{t-2} = Z_t$.
+a) First let's rewrite our equation in terms of backshift operator B.
+$$
+(1 - \phi B - \phi^2B^2)X_t = Z_t
+$$
+We have $\phi(B)X_t = Z_t$ When we look at a polynomial representation of this equation substituting z for B:
+$$
+(1 - \phi z - \phi^2 z^2) = \phi(z)
+$$
+To prove causality, we must find the roots of z using the quadratic formula.
+$$
+\begin{aligned}
+z &= \frac{\phi \pm \sqrt{(-\phi)^2 - 4(-\phi^2)(1)}}{2(-\phi^2)} \\
+&= \frac{\phi \pm \sqrt{\phi^2 + 4\phi^2}}{-2\phi^2} \\
+&= \frac{\phi \pm \sqrt{5\phi^2}}{-2\phi^2} \\
+&= \frac{\phi \pm \phi \sqrt{5}}{-2\phi^2} \\
+&= \frac{1 \pm \sqrt{5}}{-2\phi}
+\end{aligned}
+$$
+Then the values for $\phi$ we need for this model to be causal are $\frac{1 \pm \sqrt{5}}{-2z}$ where $|z| < 1$. \
+b) We're given $\hat{\gamma}(0) = 6.06, \hat{\rho}(1) = 0.687$. Find estimates of $\phi$ and $\sigma_Z^2$ through Yule-Walker.
+$$
+\begin{aligned}
+\rho_X(1) &= \phi_1 + \phi_2\rho_X(1); \\
+\rho_X(2) &= \phi_1\rho_X(1) + \phi_2; \\
+\\
+0.687 &= \phi + \phi^2(0.687); \\
+\rho_X(2) &= \phi(0.687) + \phi^2; \\
+\\
+0 &= -0.687 + \phi + \phi^2(0.687); \\
+\rho_X(2) &= \phi(0.687) + \phi^2;\\
+\\
+\hat{\phi} &= 1.9646108 \\
+\rho_X(2) &= 1.9646108(0.687) + (1.9646108)^2\\
+\\
+\rho_X(2) &= 5.209383
+\end{aligned}
+$$
+Our estimate for $\phi$ is \textbf{1.9646108}.\
+To find our estimate for $\sigma_z^2$, we use our ACVF equation:
+$$
+\begin{aligned}
+\gamma_X(k) &= \phi_1 \gamma_X(1) + \phi_2 \gamma_X(2) + \sigma_z^2 \\
+\gamma_X(2) &= \phi_1\rho_X(1)\gamma_X(0) + \phi_2\rho_X(2)\gamma_X(0) +\sigma_z^2 \\
+\rho_X(2)\gamma_X(0) &= \phi\rho_X(1)\gamma_X(0) + \phi^2\rho_X(2)\gamma_X(0) +\sigma_z^2 \\
+5.209383 * 6.06 &= 1.9646108*0.687*6.06 + 1.9646108^2*5.209383 * 6.06 +\sigma_z^2 \\
+31.56886 &= 130.0253 +\sigma_z^2 \\
+-98.45644 \ \text{or} \  -6.609031&= \hat{\sigma_z}^2
+\end{aligned}
+$$
+## 7.
+For graph x1, $\phi_1^1 = -0.90$, for graph x2, $\phi_1^2 = 0.50$, for graph x3, $\phi_1^3 = -0.99$, for graph x4, $\phi_1^4 = -0.99$. These values are seen in answer \textbf{C}.

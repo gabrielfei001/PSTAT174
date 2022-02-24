@@ -1,0 +1,128 @@
+---
+title: "PSTAT174 Homework 6"
+author: "Gabriel Fei"
+date: "11/10/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1
+
+To determine the order of best to worst models for our 3 models ARMA(2), MA(1) and ARMA(2, 1), we can use AICC to rank them. The AICC model is $-2 \times \text{log-likelihood} + 2 \times \frac{rn}{n - r - 1}$ where n is the sample size and r is the number of free parameters. 
+$$
+\begin{aligned}
+AR(2)'s \ AICC &= -2 \times -36.4 + 2 \times \frac{3 \cdot 12}{12 - 3 - 1} \\
+&= 81.8 \\
+MA(1)'s \ AICC &= -2 \times -36.51 + 2 \times \frac{2 \cdot 12}{12 - 2 - 1} \\
+&= 78.35333 \\
+ARMA(2,1)'s \ AICC &= -2 \times -36.02 + 2\times \frac{4 \cdot 12}{12 - 4 - 1} \\
+&= 85.75429
+\end{aligned}
+$$
+```{r}
+AR = -2 * -36.4 + (2 * ((3*12)/(12 - 3 - 1)))
+MA = -2 * -36.51 + (2 * ((2*12)/(12 - 2 - 1)))
+ARMA = -2 * -36.02 + (2 * ((4*12)/(12 - 4 - 1)))
+print(AR)
+print(MA)
+print(ARMA)
+```
+Using our calculated AICC's of each model, we rank the models from best to worst based on the lowest AICC to the highest AICC. In our case we would get MA(1), AR(2), ARMA(2,1) as the 3 models ranked best to worst. \textbf{So our answer is C.}
+
+## Question 2
+
+Given this time series model: $X_t - \phi_1 X_{t-1} = Z_t + \theta_1 Z_{t-1}$, and the acf of the residuals, we're to determine whether the assumed model is really appropriate.
+```{r}
+# Checking the sample ACF of residuals to see if they resemble the White Noise 95% confidence interval 
+# k = 1
+abs(-0.04) < 1.96/sqrt(24)
+# k = 2
+abs(-0.5) < 1.96/sqrt(24)
+# k = 3
+abs(0.03) < 1.96/sqrt(24)
+# k = 4
+abs(-0.01) < 1.96/sqrt(24)
+# k = 5
+abs(0.01) < 1.96/sqrt(24)
+# k = 6
+abs(0.02) < 1.96/sqrt(24)
+# k = 7
+abs(0.03) < 1.96/sqrt(24)
+# k = 8
+abs(-0.01) < 1.96/sqrt(24)
+```
+As seen from our check with the 95% confidence intervals of WN, the model doesn't resemble the intervals, since at k = 2, the value lies outside the intervals, so the assumed model isn't appropriate. Seeing that at k = 2, the ACF value lies outside the interval, we can take our better model to be MA(2). To modify our assumed model to be appropriate, we can multiply the MA(2) model in terms of the backshift operator to the assumed model that's also rewritten in terms of the backshift operator. \
+First let's rewrite the assumed model in terms of the backshift operator.
+$$
+\begin{aligned}
+X_t - \phi_1 X_{t-1} &= Z_t + \theta_1 Z_{t-1} \\
+\phi(1-B)X_t &= \theta(1 + B)Z_t \\
+(1 - \phi_1 B)X_t &= (1 + \theta_1 B)Z_t \\
+\end{aligned}
+$$
+Now our MA(2) model would normally be written as:
+$$
+X_t = Z_t + \theta_1Z_{t-1} + \theta_2 Z_{t-2}
+$$
+Rewriting in terms of backshift:
+$$
+X_t = \theta(1 +  B + B^2)Z_t
+$$
+Multiplying our suggested MA(2) model to our assumed model:
+$$
+\begin{aligned}
+\phi(1-B)X_t &= \theta(1 + B)Z_t \cdot \theta(1 +  B + B^2)Z_t \\
+\phi(1-B)X_t &= \theta(1 + 2B + 2B^2 + B^3)Z_t
+\end{aligned}
+$$
+\textbf{From our newly modified model we can see that this is an ARMA(1, 3) model, so the newly suggested model would be an ARMA(1, 3) model.} 
+
+## Quesion 3
+
+We supposed that in a sample size 100 from an AR(1) process with mean $\mu, \phi = 0.6$ and $\sigma^2 = 2$, we obtain $\bar{x}_{100} = 0.271$. To construct an approximate 95% confidence interval for $\mu$ we can use the formula:\
+95% C.I. for $\mu$:
+$$
+\left ( \bar{X}_n - \frac{1.96\sqrt{v}}{\sqrt(n)}, \bar{X}_n + \frac{1.96\sqrt{v}}{\sqrt(n)} \right )
+$$
+#We have $\bar{x}_n = 0.271$ where n = 100. \
+#To approximate v we can use:
+$$
+v \approx \gamma_x(0) + 2\sum_{k=1}^\infty\gamma_x(k)
+$$
+For an AR(1) model we know that:
+$$
+\gamma_x(0) = \frac{\sigma_Z^2}{1 - \phi_1^2}\\
+\gamma_x(k) = \phi_1^k\gamma_x(0)
+$$
+Plugging in our values we get:
+$$
+\begin{aligned}
+\gamma_x(0) &= \frac{\sigma_Z^2}{1 - \phi_1^2}\\
+&= \frac{2}{1 - (0.6)^2}\\
+&= 3.125 \\
+\gamma_x(k) &= \phi_1^k\gamma_x \\
+\gamma_x(1) &= \phi_1\gamma_x(0) \\
+&= 0.6 \cdot 3.125 \\
+&= 1.875
+\end{aligned}
+$$
+Plugging back into our equation for v:
+$$
+\begin{aligned}
+v &\approx \gamma_x(0) + 2\sum_{k=1}^\infty\gamma_x(k) \\
+&= 3.125 + 2 (1.875) \\
+&= 6.875
+\end{aligned}
+$$
+Finally plugging back into our confidence interval formulas to get the actual approximate intervals:
+$$
+\begin{aligned}
+&\left ( \bar{X}_n - \frac{1.96\sqrt{v}}{\sqrt(n)}, \bar{X}_n + \frac{1.96\sqrt{v}}{\sqrt(n)} \right ) \\
+&= \left (0.271 - \frac{1.96\sqrt{6.875}}{\sqrt{100}}, 0.271 + \frac{1.96\sqrt{6.875}}{\sqrt{100}} \right ) \\
+&= (-0.2429163, \ 0.7849163)
+\end{aligned}
+$$
+\textbf{We can see that given this confidence interval of } $\mu$ \textbf{: (-0.2429163,  0.7849163), that }$\mu = 0$ \textbf{does lie in between the interval so the data is compatible with the hypothesis that }$\mu = 0$.
